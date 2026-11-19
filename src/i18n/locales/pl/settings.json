@@ -115,6 +115,27 @@
     "intermenstrualBleeding": "Plamienia",
     "ovulationTest": "Testy owulacyjne"
   },
+  "serverSupplement": {
+    "title": "Dane z serwera Pulse",
+    "description": "Uzupełnia brakujące parametry z Health Connect i pokazuje podsumowania aktywności Google. Hasło jest wysyłane przez HTTPS tylko na podany serwer Pulse. Rozłączenie usuwa z telefonu pomiary z serwera.",
+    "address": "Adres serwera",
+    "username": "Nazwa użytkownika na serwerze",
+    "password": "Hasło do serwera",
+    "connect": "Połącz z serwerem Pulse",
+    "connecting": "Łączenie…",
+    "disconnect": "Rozłącz i usuń pomiary z serwera",
+    "lastSync": "Ostatnie pobranie: {{date}}",
+    "error": {
+      "address": "Wpisz adres HTTPS serwera bez ścieżki.",
+      "credentials": "Serwer nie zaakceptował nazwy użytkownika i hasła.",
+      "rate": "Za dużo prób. Odczekaj minutę i spróbuj ponownie.",
+      "incompatible": "Ten serwer nie obsługuje interfejsu API Pulse Mobile.",
+      "expired": "Sesja wygasła lub została unieważniona. Rozłącz serwer i zaloguj się ponownie.",
+      "profile": "Najpierw dokończ konfigurację profilu na serwerze Pulse.",
+      "timezone": "Profile Pulse na serwerze i telefonie muszą mieć tę samą strefę czasową.",
+      "network": "Nie udało się połączyć z serwerem Pulse. Sprawdź adres, certyfikat i połączenie."
+    }
+  },
   "source": {
     "pastData": "Dane z przeszłości",
     "notAllowedCount_one": "{{count}} niedozwolony",

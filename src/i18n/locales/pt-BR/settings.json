@@ -115,6 +115,27 @@
     "intermenstrualBleeding": "Sangramento intermenstrual",
     "ovulationTest": "Testes de ovulação"
   },
+  "serverSupplement": {
+    "title": "Dados do servidor Pulse",
+    "description": "Preencha as lacunas nos sinais vitais do Health Connect e veja os totais de atividade do Google. Sua senha só é enviada ao servidor Pulse informado, por HTTPS. Desconectar remove deste celular as medições do servidor.",
+    "address": "Endereço do servidor",
+    "username": "Usuário do servidor",
+    "password": "Senha do servidor",
+    "connect": "Conectar servidor Pulse",
+    "connecting": "Conectando…",
+    "disconnect": "Desconectar e remover medições do servidor",
+    "lastSync": "Último download: {{date}}",
+    "error": {
+      "address": "Informe o endereço HTTPS do servidor sem um caminho.",
+      "credentials": "O servidor não aceitou esse usuário e senha.",
+      "rate": "Muitas tentativas. Aguarde um minuto e tente novamente.",
+      "incompatible": "Este servidor não é compatível com a API do Pulse Mobile.",
+      "expired": "A sessão expirou ou foi revogada. Desconecte o servidor e entre novamente.",
+      "profile": "Primeiro, conclua a configuração do seu perfil no servidor Pulse.",
+      "timezone": "Os perfis do Pulse no servidor e no celular devem usar o mesmo fuso horário.",
+      "network": "Não foi possível acessar o servidor Pulse. Verifique o endereço, o certificado e a conexão."
+    }
+  },
   "source": {
     "pastData": "Dados anteriores",
     "notAllowedCount_one": "{{count}} não permitido",
