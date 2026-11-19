@@ -32,7 +32,7 @@ const files = (pattern: string) => fs.globSync(pattern, { cwd: ROOT }).filter((f
 const actionFiles = files("src/**/*.{ts,tsx}").filter((f) => /^\s*["']use server["']/.test(fs.readFileSync(path.join(ROOT, f), "utf8")));
 const routeFiles = files("src/app/**/route.ts");
 /** `src/app/(group)/a/b/route.ts` → `/a/b`. */
-const urlOf = (f: string) => f.replace(/^src\/app/, "").replace(/\/route\.ts$/, "").replace(/\/\([^)]+\)/g, "") || "/";
+const urlOf = (f: string) => f.replaceAll("\\", "/").replace(/^src\/app/, "").replace(/\/route\.ts$/, "").replace(/\/\([^)]+\)/g, "") || "/";
 
 type Fn = (...args: unknown[]) => Promise<unknown>;
 let actions: { name: string; fn: Fn }[] = [];
@@ -96,7 +96,7 @@ describe("auth contract", () => {
       expect(names).toContain(n);
     }
     const urls = routes.map((r) => r.url);
-    for (const u of ["/status", "/sync", "/avatar", "/export/daily", "/logout", "/login/demo", "/healthz", "/api/auth/[...all]"]) expect(urls).toContain(u);
+    for (const u of ["/status", "/sync", "/avatar", "/export/daily", "/logout", "/login/demo", "/healthz", "/api/auth/[...all]", "/api/mobile/v1/measurements", "/api/mobile/v1/session"]) expect(urls).toContain(u);
   });
 
   it.each([
@@ -133,6 +133,8 @@ describe("auth contract", () => {
     for (const cookie of cookies) {
       for (const { url, method, fn } of routes) {
         if (PUBLIC.some((p) => p.test(url))) continue;
+        // Like web sign-in, issuing a mobile session starts signed out. Its DELETE still requires a device credential.
+        if (method === "POST" && url === "/api/mobile/v1/session") continue;
         const req = new NextRequest(`http://pulse:3000${url}?format=csv`, { method, headers: cookie ? { cookie } : {} });
         const res = (await fn(req, { params: Promise.resolve({}) })) as Response;
         expect(res.status, `${method} ${url} with ${cookie}`).toBe(401);
