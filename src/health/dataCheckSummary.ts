@@ -49,6 +49,21 @@ export type SourceLine = { source: string; records: number; value: number | null
 export type MetricLine = { key: string; label: string; unit: string; pulse: number | null; sources: SourceLine[] };
 export type DayCheck = { day: string; metrics: MetricLine[]; sleep: { pulse: string[]; sources: SourceLine[] } };
 
+/** Read outcomes stay explicit; a failed or skipped read is not an empty Health Connect database. */
+export type ReadDiagnostic = {
+  type: ReadType;
+  status: "ok" | "not_allowed" | "error";
+  records: number;
+  invalidRecords: number;
+  skippedRanges: number;
+  errorCode?: string;
+};
+
+export function invalidRecordCount(type: ReadType, records: RawRecord[]): number {
+  const metric = CHECK_METRICS.find((m) => m.type === type);
+  return records.filter((r) => startOf(r) == null || (metric ? metric.value(r) == null : !r.endTime || !Number.isFinite(Date.parse(r.endTime)))).length;
+}
+
 /** Groups each metric's raw records by local day and source; `pulse` is what Pulse stored for that day. */
 export function summarize(raw: Partial<Record<ReadType, RawRecord[]>>, sleepRaw: RawRecord[], metrics: Metrics[], sessions: Session[], days: string[], tz: string, values: { day: string; key: string; value: number }[] = []): DayCheck[] {
   const byDay = new Map(metrics.map((m) => [m.day, m]));
@@ -101,8 +116,16 @@ export function summarize(raw: Partial<Record<ReadType, RawRecord[]>>, sleepRaw:
 const round = (v: number) => (Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 10) / 10);
 
 /** Plain-text report (for Share and for reading back from the device). */
-export function formatReport(days: DayCheck[]): string {
+export function formatReport(days: DayCheck[], diagnostics: ReadDiagnostic[] = [], window?: { start: Date; end: Date; timeZone: string }): string {
   const out: string[] = ["Pulse data check — every app's records in Health Connect"];
+  if (window) out.push(`Read window: ${window.start.toISOString()}–${window.end.toISOString()} (${window.timeZone})`);
+  if (diagnostics.length) {
+    out.push("", "Health Connect reads (all apps, before import):");
+    for (const d of diagnostics) {
+      const status = d.status === "not_allowed" ? "not allowed (permission API)" : d.status === "error" ? `read failed (${d.errorCode ?? "read_failed"})` : "allowed; read succeeded";
+      out.push(`  ${d.type}: ${status}; ${d.records} raw records; ${d.invalidRecords} invalid time/value; ${d.skippedRanges} unreadable ranges skipped`);
+    }
+  }
   for (const d of days) {
     out.push("", `■ ${d.day}`);
     for (const m of d.metrics) {

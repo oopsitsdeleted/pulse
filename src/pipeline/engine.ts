@@ -680,8 +680,10 @@ const MONITOR_FIELD = { restingHr: "rhr", hrv: "hrv", resp: "resp", spo2: "spo2"
 export function engineMonitor(f: Fold, row: HealthMonitorRow): HealthMonitorRow {
   if (row.reason !== null) return row;
   const nights = f.monitorRows.slice(-MONITOR_WINDOW);
-  // No SpO2: Fitbit does not write it to Health Connect, so it is left out rather than shown empty.
-  const vitals = row.vitals.filter((v) => v.key !== "spo2").map((v) => {
+  const vitals = row.vitals.map((v) => {
+    // Keep imported SpO2 and its existing one-sided range (including the 95% floor).
+    // A missing reading stays no_data; source capabilities must not hide available data.
+    if (v.key === "spo2") return v;
     const xs = nights.map((n) => n[MONITOR_FIELD[v.key]]).filter((x): x is number => x != null && Number.isFinite(x));
     const s = popStats(xs);
     const range = s && { low: roundHalfAway(s.mean - s.sd, 2), high: roundHalfAway(s.mean + s.sd, 2) };

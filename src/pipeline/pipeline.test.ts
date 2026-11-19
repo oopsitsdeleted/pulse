@@ -179,7 +179,8 @@ describe("parity with the web app", () => {
     // Version 29: Fitbit's HRV and resting HR are every vital's source of truth. Version 28's value was "32eeb5d9e23357a3".
     // 30: Pulse Age's VO2 max falls back to the estimate (the seed has Fitbit's, so only the version moves). Version 29's value was "22839852f7ee4661".
     // 31: Blood pressure in Health Monitor (causal spot readings persisted in health_monitor). Version 30's value was "25a36d10947fc464".
-    "daily_scores.scoring_version": "9d8a77fc84882991",
+    // 32: restore imported SpO2 in Health Monitor; every other metric's formula is unchanged.
+    "daily_scores.scoring_version": "ae95b29d44b502c1",
     // Version 15: Activity Strain is the session's Banister TRIMP plus its muscular load through 5.05 · ln(1 + 0.09 · T)
     // (a seeded 45-minute strength session goes from 8.2 to 9.9 on 0–21), each activity stores its `cardioTrimp` and
     // `muscularTrimp`, and its zone seconds count Zone 1 from 40 % of the reserve. Version 14's value was "cb2d75373aaf4d20".
@@ -247,7 +248,7 @@ describe("parity with the web app", () => {
     // value was "3a2163c7f92d4dab".
     // Version 29: HRV and resting HR are Fitbit's, the values every screen shows. Version 28's value was "47289fc792ec11ef".
     // 31: Health Monitor persists causal daily blood pressure spot reading (`bloodPressure`). Version 30's value was "4d132dadfd15bf77".
-    "daily_scores.health_monitor": "c17d856a2509354f",
+    "daily_scores.health_monitor": "f36c361b5e80bf2c",
     // Mobile rebuilds Pulse Age on WHOOP's Healthspan method (src/core/algorithms/healthspan.ts): 6.0 years per ln HR
     // (WHOOP's 10 × an overlap factor of 0.6) with no 9/n rescaling (a missing term counts 0), WHOOP's references and
     // curves (sleep from 7 h, Arem and Ahmadi zone curves, strength flat after 40 min, lean mass as body fat %), zone time
@@ -409,7 +410,8 @@ describe("the last 30 days", () => {
     expect(Math.min(...efforts)).toBeGreaterThanOrEqual(0); // a rest day can sit at 0
   });
 
-  it("have Health Monitor's four vitals on every night with data (no SpO2: Health Connect has none)", () => {
+  it("have Health Monitor's five vitals, retaining imported SpO2 on every night with data", async () => {
+    const oxygen = new Map((await store.allMetrics()).map((m) => [m.day, m.spo2Pct]));
     for (const d of last30()) {
       const hm = col(d, "health_monitor");
       if (bandOffNights.includes(d)) {
@@ -417,7 +419,11 @@ describe("the last 30 days", () => {
         continue;
       }
       if (hm.reason !== null) throw new Error(`${d}: ${hm.reason}`);
-      expect(hm.vitals.map((v) => v.key).sort()).toEqual(["hrv", "resp", "restingHr", "skinTempDev"]);
+      expect(hm.vitals.map((v) => v.key).sort()).toEqual(["hrv", "resp", "restingHr", "skinTempDev", "spo2"]);
+      const spo2 = hm.vitals.find((v) => v.key === "spo2")!;
+      expect(spo2.value).toBe(oxygen.get(d));
+      expect(spo2.range?.low).toBeGreaterThanOrEqual(95);
+      expect(spo2.range?.high).toBe(100);
     }
   });
 

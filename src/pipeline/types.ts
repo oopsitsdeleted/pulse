@@ -82,8 +82,9 @@ import type { LoadStatus } from "@/core/engine/strain";
  * the sleep-session estimate) instead of the engine's own aggregates of the night's samples.
  * 30: Pulse Age's VO2 max falls back to Pulse's own daily estimate when the 28 days have no Fitbit VO2 max.
  * 31: Blood pressure in Health Monitor (causal spot readings persisted in health_monitor, AHA/ACC classifications).
+ * 32: Restore imported SpO2 to Health Monitor, preserving its existing one-sided range.
  */
-export const SCORING_VERSION = 31;
+export const SCORING_VERSION = 32;
 
 export type PipelineOptions = {
   timeZone: string;
