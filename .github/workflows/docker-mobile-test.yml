@@ -1,0 +1,45 @@
+name: Build Pulse server test image
+on:
+  workflow_dispatch:
+  push:
+    branches: [server/mobile-supplement]
+permissions:
+  contents: read
+  packages: write
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - name: Build server image
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}-server:mobile-test-${GITHUB_RUN_NUMBER}"
+          docker build --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" --tag "$image" .
+          docker save "$image" | gzip > pulse-server-image.tar.gz
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pulse-server-image-linux-amd64
+          path: pulse-server-image.tar.gz
+          compression-level: 0
+          retention-days: 14
+      - name: Publish test tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}-server:mobile-test-${GITHUB_RUN_NUMBER}"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$image"
+          echo "\`$image\` (linux/amd64)" >> "$GITHUB_STEP_SUMMARY"

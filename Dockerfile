@@ -26,6 +26,7 @@ ENV MALLOC_ARENA_MAX=2 NODE_OPTIONS="--max-old-space-size-percentage=50 --max-se
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 COPY --from=build --chown=node:node /app/public ./public
+COPY --from=build /app/LICENSE /app/NOTICE ./
 # Migrations run at boot from process.cwd()/drizzle.
 COPY --from=build --chown=node:node /app/drizzle ./drizzle
 # `docker exec pulse node scripts/reset-password.mjs <email-or-username>` (no email server for resets).
