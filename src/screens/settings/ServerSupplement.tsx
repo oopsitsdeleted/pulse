@@ -78,7 +78,7 @@ export function ServerSupplement() {
           </Button>
         </>
       )}
-      {error && <Text accessibilityRole="alert" className="text-recovery-red-text">{t(`serverSupplement.error.${error}`, { defaultValue: t("serverSupplement.error.network") })}</Text>}
+      {!!error && <Text accessibilityRole="alert" className="text-recovery-red-text">{t(`serverSupplement.error.${error}`, { defaultValue: t("serverSupplement.error.network") })}</Text>}
     </View>
   );
 }
