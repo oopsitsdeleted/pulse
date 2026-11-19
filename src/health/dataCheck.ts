@@ -38,7 +38,14 @@ export async function runDataCheck(store: Store, opts: { timeZone: string; days?
     raw[cm.type] = await read(cm.type, range);
   }
   const sleepRaw = await read("SleepSession", { start: new Date(range.start.getTime() - 86_400_000), end: now });
-  const [metrics, sessions, values] = await Promise.all([store.allMetrics(), store.allSessions(), store.dailyValues({ from: days[n - 1], to: today })]);
+  const [metrics, sessions, values, server] = await Promise.all([
+    store.allMetrics(), store.allSessions(), store.dailyValues({ from: days[n - 1], to: today }), store.readServerVitals(),
+  ]);
   const checked = summarize(raw, sleepRaw, metrics, sessions, days, tz, values);
-  return { days: checked, text: formatReport(checked, diagnostics, { ...range, timeZone: tz }) };
+  const text = formatReport(checked, diagnostics, { ...range, timeZone: tz });
+  if (!server || server.snapshot.timeZone !== tz) return { days: checked, text };
+  const recent = server.snapshot.vitals.filter((v) => days.includes(v.day));
+  const counts = (["spo2Pct", "respBpm", "rhrBpm", "hrvMs", "vo2maxDaily", "vo2maxRun"] as const)
+    .map((key) => `  ${key}: ${recent.filter((r) => r[key] !== null).length} days`);
+  return { days: checked, text: [text, "", "Pulse server supplement (separate from the Health Connect reads above):", ...counts].join("\n") };
 }

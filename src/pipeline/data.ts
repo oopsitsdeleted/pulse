@@ -29,7 +29,7 @@ export const byteOrder = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 export async function load(store: Store, { timeZone: tz }: PipelineOptions) {
   const [metricRows, sessionRows, exerciseRows, hrSpan, bpRows] = await Promise.all([
-    metricsWithLoggedBody(store),
+    metricsWithLoggedBody(store, tz),
     store.allSessions(),
     store.allExercises(),
     store.hrBounds(),

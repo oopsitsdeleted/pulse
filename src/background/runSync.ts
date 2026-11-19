@@ -10,6 +10,7 @@ import { openStore } from "@/data/db";
 import type { Store } from "@/data/store";
 import type { Profile } from "@/data/types";
 import { syncHealthConnect } from "@/health/sync";
+import { ServerSupplementError, syncServer } from "@/health/serverSupplement";
 import { timed } from "@/lib/perf";
 import { errorKind, log, report, reportError, traced } from "@/lib/telemetry";
 import { skippedTypes } from "@/health/connect";
@@ -41,6 +42,8 @@ export type RunSyncResult = {
   warnings: string[];
   /** Health Connect had nothing new, so nothing was read (scoring still ran): the last read's warnings stand. */
   unchanged?: true;
+  /** Last foreground server refresh outcome; separate from Health Connect warning retention. */
+  serverWarning?: string | null;
 };
 
 /** How long the app waits for a background run before giving up and using what is on disk. */
@@ -107,6 +110,7 @@ async function runSteps(store: Store, profile: Profile, source: Source, opts: Ru
   if (!lock.taken) return { ran: false, skipped: `${lock.holder === "app" ? "the app" : "the background task"} is syncing`, warnings: [] };
   const warnings: string[] = [];
   let unchanged = false;
+  let serverWarning: string | null | undefined;
   try {
     // A reset in another runtime must invalidate this run even if the person reconnects to the same source.
     const epoch = await Promise.resolve().then(widgetEpoch).catch(() => null);
@@ -128,6 +132,13 @@ async function runSteps(store: Store, profile: Profile, source: Source, opts: Ru
         await appendLog({ at: t0, result: "ok", ms: Date.now() - t0, note: `app sync: ${flags.length ? flags.join(", ") : "recent days"}` });
       }
     }
+    if (source === "health_connect" && !opts.scoreOnly && opts.owner === "app") {
+      await syncServer(store, opts.timeZone).then(() => {
+        serverWarning = null;
+      }).catch((e: unknown) => {
+        serverWarning = `pulse_server:${e instanceof ServerSupplementError ? e.code : "network"}`;
+      });
+    }
     await timed(`pipeline (${opts.owner})`, () => runPipeline(store, profile, { today: localDay(Date.now() / 1000, opts.timeZone), onProgress: opts.onProgress })).catch((e: unknown) => {
       void reportError("pipeline.failed", e, { owner: opts.owner });
       throw e;
@@ -144,7 +155,7 @@ async function runSteps(store: Store, profile: Profile, source: Source, opts: Ru
     const now = Math.floor(Date.now() / 1000);
     // The app's own runs publish through dataChanged(); only a background run publishes here.
     if (epoch !== null && opts.owner !== "app") await store.getSyncState().then((sync) => refreshWidgets({ store, profile, timeZone: opts.timeZone, today: localDay(now, opts.timeZone), now, sync }, source, { epoch })).catch(() => {});
-    return { ran: true, warnings, ...(unchanged && { unchanged: true as const }) };
+    return { ran: true, warnings, ...(unchanged && { unchanged: true as const }), ...(serverWarning !== undefined && { serverWarning }) };
   } finally {
     await releaseLock(opts.owner);
     await notifyAfterRun(store, opts.timeZone);

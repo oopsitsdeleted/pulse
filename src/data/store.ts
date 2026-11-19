@@ -1,4 +1,5 @@
 import type { WorkoutStore } from "./workouts";
+import type { ServerVitalsCache } from "./serverVitals";
 // The storage contract every layer talks to: the importer writes rows, the pipeline reads rows and writes scores,
 // the screen queries read both. One implementation on expo-sqlite (db.ts); tests may use an in-memory one.
 import type { BloodPressureReading, DailyValue, Exercise, HealthRecord, HrSample, HrvSample, JournalEntry, Metrics, Profile, Segment, Session, StepsMinute, SyncState } from "./types";
@@ -17,6 +18,8 @@ export interface Store {
   setProfile(p: Profile): Promise<void>;
   getSyncState(): Promise<SyncState>;
   setSyncState(s: Partial<SyncState>): Promise<void>;
+  readServerVitals(): Promise<ServerVitalsCache | null>;
+  setServerVitals(cache: ServerVitalsCache | null): Promise<void>;
 
   // Rows (upsert by primary key; the importer re-reads the last few days each sync)
   upsertMetrics(rows: Metrics[]): Promise<void>;

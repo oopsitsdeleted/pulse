@@ -4,12 +4,14 @@
 // Blood oxygen is typed in from the Fitbit app because the Google Health app doesn't share it with Health Connect.
 import type { Store } from "./store";
 import { emptyMetrics, type Metrics } from "./types";
+import { mergeServerVitals } from "./serverVitals";
 
 const ALL = Number.MAX_SAFE_INTEGER;
 
 /** `store.allMetrics()` with logged weight, body fat and blood oxygen applied; sorted by day like the store's own list. */
-export async function metricsWithLoggedBody(store: Store): Promise<Metrics[]> {
-  const [metrics, logged] = await Promise.all([store.allMetrics(), store.loggedEntries(0, ALL)]);
+export async function metricsWithLoggedBody(store: Store, timeZone?: string): Promise<Metrics[]> {
+  const [local, logged, cache] = await Promise.all([store.allMetrics(), store.loggedEntries(0, ALL), store.readServerVitals()]);
+  const metrics = mergeServerVitals(local, cache?.snapshot ?? null, timeZone);
   const latest = new Map<string, { kg?: { v: number; ts: number }; pct?: { v: number; ts: number }; spo2?: { v: number; ts: number } }>();
   for (const e of logged) {
     const data = e.data as { kg?: unknown; pct?: unknown } | null;

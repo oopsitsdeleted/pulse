@@ -6,7 +6,8 @@
 
 **Recovery, strain and sleep from your Fitbit, scored on your Android phone.**
 
-No server, no account, no cloud: Pulse reads your Fitbit data from Health Connect and keeps every byte of it on the phone.
+No server or account required: Pulse reads Fitbit data from Health Connect and scores it on the phone.
+You can optionally connect your own [self-hosted Pulse server](docs/server-supplement.md) for additional daily measurements.
 It sends short error reports (never health data) so failures get fixed; Settings › App › Privacy turns them off ([what is sent](docs/telemetry.md)).
 
 [![CI](https://github.com/adityaongit/pulse-mobile/actions/workflows/ci.yml/badge.svg)](https://github.com/adityaongit/pulse-mobile/actions/workflows/ci.yml)

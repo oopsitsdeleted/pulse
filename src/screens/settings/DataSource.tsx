@@ -27,6 +27,7 @@ import { toast } from "@/ui/Toast";
 import { useTheme } from "@/ui/theme";
 import { DURATION } from "@/ui/motion";
 import { BODY, ConfirmDialog, HINT, ProgressBar, ROW_LABEL, ROW_RULE } from "./controls";
+import { ServerSupplement } from "./ServerSupplement";
 
 /** Health Connect's record types as Settings lists them: the key of each label in `settings:recordType`. The words resolve at use. */
 const TYPE_KEY = {
@@ -299,6 +300,7 @@ export function DataSource({ now }: { now: number }) {
           </Button>
         </View>
       )}
+      {hc && <ServerSupplement />}
       {hc && perms.state && <DataTypes key={String(perms.state.missing.length)} perms={perms.state} />}
       <ConfirmDialog
         open={confirm === "reimport"}

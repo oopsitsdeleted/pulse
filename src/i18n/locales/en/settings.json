@@ -115,6 +115,27 @@
     "intermenstrualBleeding": "Spotting",
     "ovulationTest": "Ovulation tests"
   },
+  "serverSupplement": {
+    "title": "Pulse server supplement",
+    "description": "Use your self-hosted Pulse account to fill gaps in Health Connect vitals and display Google activity totals. Your password is only sent to the HTTPS server you enter. Disconnecting removes the server readings from this phone.",
+    "address": "Server address",
+    "username": "Server username",
+    "password": "Server password",
+    "connect": "Connect Pulse server",
+    "connecting": "Connecting…",
+    "disconnect": "Disconnect and remove server readings",
+    "lastSync": "Last downloaded: {{date}}",
+    "error": {
+      "address": "Enter the server’s HTTPS address without a path.",
+      "credentials": "The server did not accept that username and password.",
+      "rate": "Too many attempts. Wait a minute and try again.",
+      "incompatible": "This server does not support the Pulse Mobile API.",
+      "expired": "The server session expired or was revoked. Disconnect and sign in again.",
+      "profile": "Finish setting up your profile on the Pulse server first.",
+      "timezone": "The server and phone Pulse profiles must use the same time zone.",
+      "network": "Could not reach the Pulse server. Check the address, certificate and connection."
+    }
+  },
   "source": {
     "pastData": "Past data",
     "notAllowedCount_one": "{{count}} not allowed",

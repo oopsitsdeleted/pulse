@@ -170,7 +170,10 @@ function run(scoreOnly = false): Promise<void> {
       if (r.warnings.length) console.log("[sync]", r.warnings.join("; "));
       if (!r.ran) console.log("[run] skipped:", r.skipped);
       const sync = await store.getSyncState();
-      patch({ status: "ready", progress: null, sync, warnings: r.ran && !r.unchanged ? r.warnings : state.warnings, onboarded: true });
+      const hcWarnings = (r.ran && !r.unchanged && !scoreOnly ? r.warnings : state.warnings).filter((w) => !w.startsWith("pulse_server:"));
+      const serverWarning = r.serverWarning === undefined ? state.warnings.find((w) => w.startsWith("pulse_server:")) : r.serverWarning;
+      const warnings = serverWarning ? [...hcWarnings, serverWarning] : hcWarnings;
+      patch({ status: "ready", progress: null, sync, warnings, onboarded: true });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       console.warn("[run]", message);
@@ -405,6 +408,8 @@ export async function reset(): Promise<void> {
   if (store) await store.workouts.clear();
   if (workoutNativeAvailable) await workoutNative.finishReset();
   workoutRecorder.clearView();
+  const { disconnectServer } = await import("@/health/serverSupplement");
+  await disconnectServer(store).catch(() => {});
   if (store) await store.clearAll();
   await clearWidgets();
   deleteAllPhotos();

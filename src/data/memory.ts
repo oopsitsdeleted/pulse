@@ -1,4 +1,5 @@
 import { MemoryWorkoutStore } from "./workouts";
+import type { ServerVitalsCache } from "./serverVitals";
 // An in-memory Store on Maps: the pipeline tests run on it, and "demo" mode can when nothing need survive a
 // restart. Rows are copied on the way in and out (JSON round-trip), so callers never share objects with the
 // store, as they would not with SQLite.
@@ -211,6 +212,10 @@ export class MemoryStore implements Store {
     return days;
   }
 
+  private serverVitals: ServerVitalsCache | null = null;
+  async readServerVitals() { return copy(this.serverVitals); }
+  async setServerVitals(cache: ServerVitalsCache | null) { this.serverVitals = copy(cache); }
+
   async allMetrics() {
     return copy([...this.metrics.values()]);
   }
@@ -363,6 +368,7 @@ export class MemoryStore implements Store {
   }
 
   async clearAll() {
+    this.serverVitals = null;
     this.profile = null;
     this.sync = { lastSyncTs: null, firstDay: null, lastError: null };
     for (const m of [this.metrics, this.sessions, this.segments, this.exercises, this.values, this.journal, this.scores, this.series, this.reports]) m.clear();

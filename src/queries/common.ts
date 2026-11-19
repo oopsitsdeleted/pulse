@@ -28,6 +28,7 @@ import { type ExtraKey, recoveryBand, stressLevel } from "./_lib";
 import type { QueryCtx } from "./ctx";
 import type { ActivityKind, DayPoint, SleepPlanVM, Span, TimelineItem, TimePoint } from "./types";
 import { metricsWithLoggedBody } from "@/data/body";
+import { dailyValuesWithServer } from "@/data/serverVitals";
 import { pulseFoodByDay, withFood } from "./food";
 import { dayRestingHr } from "@/pipeline/restingHr";
 
@@ -100,8 +101,8 @@ export async function loadDays(ctx: QueryCtx, from: string, to: string): Promise
   const { store } = ctx;
   const [scoreRows, metricRows, extraRows, logged] = await Promise.all([
     store.scoresIn({ from, to }),
-    metricsWithLoggedBody(store),
-    store.dailyValues({ from, to }),
+    metricsWithLoggedBody(store, ctx.timeZone),
+    dailyValuesWithServer(store, { from, to }, ctx.timeZone),
     store.loggedEntries(localMidnight(from, ctx.timeZone), Number.MAX_SAFE_INTEGER),
   ]);
   const scores = new Map(scoreRows.map((r) => [r.day, r]));

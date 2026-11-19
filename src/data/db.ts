@@ -1,4 +1,5 @@
 import { SqliteWorkoutStore } from "./workoutDb";
+import type { ServerVitalsCache } from "./serverVitals";
 // The Store on expo-sqlite. The schema mirrors Pulse's Postgres one (src/server/db/schema.ts) minus user ids:
 // one person per database. JSON columns hold the score and series blobs; heart rate and steps are bucketed per
 // UTC day like Pulse's hr_days / steps_days (parallel JSON arrays of second-of-day offsets and values), since a
@@ -17,6 +18,7 @@ create table if not exists profile (
   waist_cm real
 );
 create table if not exists sync_state (id integer primary key check (id = 1), last_sync_ts integer, first_day text, last_error text);
+create table if not exists server_vitals (id integer primary key check (id = 1), payload text not null);
 create table if not exists daily_metrics (
   day text primary key, hrv_ms real, hrv_deep_ms real, rhr_bpm real, resp_bpm real, nightly_temp_c real, spo2_pct real,
   vo2max_daily real, vo2max_run real, steps integer, calories real, weight_kg real, body_fat_pct real, hr_zones text,
@@ -598,6 +600,14 @@ class SqliteStore implements Store {
   async allMetrics() {
     return (await this.db.getAllAsync<MetricsRow>("select * from daily_metrics order by day")).map(metricsOf);
   }
+  async readServerVitals(): Promise<ServerVitalsCache | null> {
+    const row = await this.db.getFirstAsync<{ payload: string }>("select payload from server_vitals where id = 1");
+    return row ? JSON.parse(row.payload) as ServerVitalsCache : null;
+  }
+  async setServerVitals(cache: ServerVitalsCache | null) {
+    if (cache === null) await this.db.runAsync("delete from server_vitals");
+    else await this.db.runAsync("insert or replace into server_vitals (id, payload) values (1, ?)", [JSON.stringify(cache)]);
+  }
   async allSessions() {
     return (await this.db.getAllAsync<SessionRow>("select * from sleep_sessions order by start_ts, id")).map(sessionOf);
   }
@@ -851,7 +861,7 @@ type SampleTable = "hr_days" | "steps_days" | "hrv_days";
 const TABLES = [
   "profile", "sync_state", "daily_metrics", "sleep_sessions", "sleep_segments", "exercises", "hr_days", "steps_days", "hrv_days", "daily_values",
   "journal_entries", "intraday_dirty", "daily_scores", "intraday_series", "reports", "activity_cost", "pipeline_checkpoint",
-  "journal_tags", "logged_entries", "health_records", "blood_pressure_readings",
+  "journal_tags", "logged_entries", "health_records", "blood_pressure_readings", "server_vitals",
 ];
 
 /** Opens (and migrates) the database. WAL with synchronous=normal: durable across crashes, no fsync per autocommit write. */
